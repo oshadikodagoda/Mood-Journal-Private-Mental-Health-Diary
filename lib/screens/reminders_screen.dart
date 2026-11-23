@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../services/notification_service.dart';
 
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
@@ -37,7 +38,12 @@ class _RemindersScreenState extends State<RemindersScreen> {
     }
   }
 
-  void _onSave() {
+  void _onSave() async {
+    if (_dailyJournalingEnabled) {
+      await NotificationService().scheduleDailyReminder(hour: _selectedTime.hour, minute: _selectedTime.minute);
+    } else {
+      await NotificationService().cancelAll();
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Reminder preferences saved!"),

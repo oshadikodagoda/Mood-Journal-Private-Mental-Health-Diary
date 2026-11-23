@@ -7,6 +7,7 @@ import 'daily_reflection_screen.dart';
 import 'entry_detail_screen.dart';
 import 'journal_history_screen.dart';
 import 'settings_screen.dart';
+import 'insights_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -58,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: _selectedIndex == 0 
           ? _buildHomeDashboard(context, greeting, dateStr, now, isDark, cardBg, textColor, subtextColor, accentColor) 
-          : const Center(child: Text("Insights / More screens coming soon")), 
+          :const InsightsScreen(), 
       ),
       
       floatingActionButton: FloatingActionButton(
