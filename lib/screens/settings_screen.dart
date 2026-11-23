@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../models/user_profile.dart';
 import 'privacy_security_screen.dart';
+import 'reminders_screen.dart';
+import 'appearance_screen.dart';
+import 'export_data_screen.dart';
+import 'about_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -35,20 +39,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _showEditNameDialog() async {
+  Future<void> _showEditNameDialog(Color accentColor, Color cardBg, Color textColor) async {
     final TextEditingController nameController = TextEditingController(text: _userName);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: cardBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("Edit Name", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text("Edit Name", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
         content: TextField(
           controller: nameController,
-          decoration: const InputDecoration(
+          style: TextStyle(color: textColor),
+          decoration: InputDecoration(
             hintText: "Enter your name",
+            hintStyle: TextStyle(color: textColor.withOpacity(0.5)),
             focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Color(0xFF6E8F68)),
+              borderSide: BorderSide(color: accentColor),
             ),
           ),
           autofocus: true,
@@ -56,11 +63,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: Colors.black54)),
+            child: Text("Cancel", style: TextStyle(color: textColor.withOpacity(0.6))),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6E8F68),
+              backgroundColor: accentColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
@@ -87,26 +94,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.primary;
+    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFFAF6EF);
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtextColor = isDark ? Colors.white60 : Colors.black54;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EF), // Soft cream background
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF6EF),
+        backgroundColor: scaffoldBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Settings",
           style: TextStyle(
-            color: Colors.black87,
+            color: textColor,
             fontWeight: FontWeight.bold,
             fontSize: 22,
           ),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF6E8F68)))
+          ? Center(child: CircularProgressIndicator(color: accentColor))
           : SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Column(
@@ -116,11 +131,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardBg,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -131,8 +146,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Container(
                           width: 50,
                           height: 50,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFE8F3E9),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE8F3E9),
                             shape: BoxShape.circle,
                           ),
                           child: const Center(
@@ -146,23 +161,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             children: [
                               Text(
                                 _userName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: textColor,
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              const Text(
+                              Text(
                                 "Private Mental Health Diary",
-                                style: TextStyle(fontSize: 12, color: Colors.black45),
+                                style: TextStyle(fontSize: 12, color: subtextColor),
                               ),
                             ],
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, color: Color(0xFF6E8F68), size: 22),
-                          onPressed: _showEditNameDialog,
+                          icon: Icon(Icons.edit_outlined, color: accentColor, size: 22),
+                          onPressed: () => _showEditNameDialog(accentColor, cardBg, textColor),
                         ),
                       ],
                     ),
@@ -171,12 +186,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 24),
 
                   // --- Group 1: Account & Privacy ---
-                  _buildSectionHeader("Account & Privacy"),
+                  _buildSectionHeader("Account & Privacy", subtextColor),
                   const SizedBox(height: 8),
-                  _buildCardGroup([
+                  _buildCardGroup(cardBg, [
                     _buildSettingsTile(
                       icon: Icons.shield_outlined,
                       title: "Privacy & Security",
+                      textColor: textColor,
+                      isDark: isDark,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -184,10 +201,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         );
                       },
                     ),
-                    const Divider(height: 1, indent: 56, endIndent: 16),
+                    Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
                     _buildSettingsTile(
                       icon: Icons.lock_outline,
                       title: "App Lock",
+                      textColor: textColor,
+                      isDark: isDark,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -200,42 +219,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 24),
 
                   // --- Group 2: Preferences ---
-                  _buildSectionHeader("Preferences"),
+                  _buildSectionHeader("Preferences", subtextColor),
                   const SizedBox(height: 8),
-                  _buildCardGroup([
+                  _buildCardGroup(cardBg, [
                     _buildSettingsTile(
                       icon: Icons.notifications_none_outlined,
                       title: "Reminders",
+                      textColor: textColor,
+                      isDark: isDark,
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Reminders module (Member 3)"),
-                            behavior: SnackBarBehavior.floating,
-                          ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const RemindersScreen()),
                         );
                       },
                     ),
-                    const Divider(height: 1, indent: 56, endIndent: 16),
+                    Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
                     _buildSettingsTile(
                       icon: Icons.light_mode_outlined,
                       title: "Appearance",
+                      textColor: textColor,
+                      isDark: isDark,
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Theme: Pastel Light (Active)"),
-                            behavior: SnackBarBehavior.floating,
-                          ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const AppearanceScreen()),
                         );
                       },
                     ),
-                    const Divider(height: 1, indent: 56, endIndent: 16),
+                    Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
                     _buildSettingsTile(
                       icon: Icons.menu_book_outlined,
                       title: "Journal Preferences",
+                      textColor: textColor,
+                      isDark: isDark,
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Journal preferences saved"),
+                          SnackBar(
+                            content: const Text("Journal preferences saved"),
+                            backgroundColor: accentColor,
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -246,27 +268,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 24),
 
                   // --- Group 3: Data ---
-                  _buildSectionHeader("Data"),
+                  _buildSectionHeader("Data", subtextColor),
                   const SizedBox(height: 8),
-                  _buildCardGroup([
+                  _buildCardGroup(cardBg, [
                     _buildSettingsTile(
                       icon: Icons.file_upload_outlined,
                       title: "Export Data",
+                      textColor: textColor,
+                      isDark: isDark,
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Export feature coming soon"),
-                            behavior: SnackBarBehavior.floating,
-                          ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ExportDataScreen()),
                         );
                       },
                     ),
-                    const Divider(height: 1, indent: 56, endIndent: 16),
+                    Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
                     _buildSettingsTile(
                       icon: Icons.delete_outline,
                       title: "Delete Data",
                       titleColor: const Color(0xFFE57373),
                       iconColor: const Color(0xFFE57373),
+                      textColor: textColor,
+                      isDark: isDark,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -279,13 +303,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 24),
 
                   // --- Group 4: About ---
-                  _buildSectionHeader("About"),
+                  _buildSectionHeader("About", subtextColor),
                   const SizedBox(height: 8),
-                  _buildCardGroup([
+                  _buildCardGroup(cardBg, [
                     _buildSettingsTile(
                       icon: Icons.info_outline,
                       title: "About Mood Journal",
-                      onTap: _showAboutDialog,
+                      textColor: textColor,
+                      isDark: isDark,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const AboutScreen()),
+                        );
+                      },
                     ),
                   ]),
 
@@ -296,21 +327,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, Color color) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w600,
-        color: Colors.black54,
+        color: color,
       ),
     );
   }
 
-  Widget _buildCardGroup(List<Widget> children) {
+  Widget _buildCardGroup(Color cardBg, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -328,82 +359,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
-    Color iconColor = Colors.black87,
-    Color titleColor = Colors.black87,
+    required Color textColor,
+    required bool isDark,
+    Color? iconColor,
+    Color? titleColor,
   }) {
     return ListTile(
-      leading: Icon(icon, color: iconColor, size: 22),
+      leading: Icon(icon, color: iconColor ?? textColor, size: 22),
       title: Text(
         title,
         style: TextStyle(
-          color: titleColor,
+          color: titleColor ?? textColor,
           fontWeight: FontWeight.w500,
           fontSize: 15,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right, color: Colors.black38, size: 20),
+      trailing: Icon(Icons.chevron_right, color: isDark ? Colors.white38 : Colors.black38, size: 20),
       onTap: onTap,
-    );
-  }
-
-  void _showAboutDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Color(0xFFFAF6EF),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.black26,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              width: 70,
-              height: 70,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE8F3E9),
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Text('🌿', style: TextStyle(fontSize: 36)),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              "Mood Journal",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              "Version 1.0.0 (Build 12)",
-              style: TextStyle(color: Colors.black45, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "\"A calmer mind builds a brighter tomorrow ✨\"",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontStyle: FontStyle.italic,
-                color: Color(0xFF6E8F68),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
     );
   }
 }

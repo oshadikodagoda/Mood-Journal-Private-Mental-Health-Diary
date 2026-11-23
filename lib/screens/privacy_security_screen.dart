@@ -27,38 +27,56 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
   }
 
   Future<void> _loadSecurityPreferences() async {
-    final UserProfile profile = await _db.getUserProfile();
-    final bool canBiometrics = await _authService.isBiometricsAvailable();
+    try {
+      final UserProfile profile = await _db.getUserProfile().timeout(
+        const Duration(seconds: 1),
+        onTimeout: () => UserProfile(name: 'User', appLockEnabled: false),
+      );
+      final bool canBiometrics = await _authService.isBiometricsAvailable().timeout(
+        const Duration(seconds: 1),
+        onTimeout: () => true,
+      );
 
-    if (mounted) {
-      setState(() {
-        _appLockEnabled = profile.appLockEnabled;
-        _biometricEnabled = canBiometrics && profile.appLockEnabled;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _appLockEnabled = profile.appLockEnabled;
+          _biometricEnabled = canBiometrics && profile.appLockEnabled;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _handleAppLockToggle(bool value) async {
-    if (value) {
-      // If turning ON, ensure a PIN is set
-      final profile = await _db.getUserProfile();
-      if (profile.pinCode == null || profile.pinCode!.isEmpty) {
-        if (!mounted) return;
-        final created = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(builder: (_) => const CreatePinScreen()),
-        );
-        if (created != true) return;
+    try {
+      if (value) {
+        final profile = await _db.getUserProfile().timeout(const Duration(seconds: 1));
+        if (profile.pinCode == null || profile.pinCode!.isEmpty) {
+          if (!mounted) return;
+          final created = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(builder: (_) => const CreatePinScreen()),
+          );
+          if (created != true) return;
+        }
       }
+
+      await _authService.toggleAppLock(value).timeout(const Duration(seconds: 1));
+    } catch (e) {
+      debugPrint('Error toggling lock: $e');
     }
 
-    await _authService.toggleAppLock(value);
-    setState(() {
-      _appLockEnabled = value;
-    });
-
     if (mounted) {
+      setState(() {
+        _appLockEnabled = value;
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(value ? 'App Lock enabled' : 'App Lock disabled'),
