@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../models/user_profile.dart';
 import 'welcome_screen.dart';
+import 'onboarding_screen.dart';
 import 'pin_lock_screen.dart';
 import 'home_screen.dart';
 
@@ -64,11 +65,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       } 
-      // 3. First time user, go to Welcome/Setup
+      // 3. First time user, go to Onboarding slides
       else {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
         );
       }
     } catch (e) {
