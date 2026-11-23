@@ -2,7 +2,6 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/journal_entry.dart';
 import '../models/emotion.dart';
-import '../models/reminder.dart';
 import '../models/user_profile.dart';
 
 class DatabaseService {
@@ -184,5 +183,37 @@ class DatabaseService {
     );
 
     return List.generate(maps.length, (i) => JournalEntry.fromMap(maps[i]));
+  }
+
+    // ==========================================
+  // USER PROFILE OPERATIONS (Member 2)
+  // ==========================================
+
+  // Get current user profile
+  Future<UserProfile> getUserProfile() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('User', limit: 1);
+    if (maps.isNotEmpty) {
+      return UserProfile.fromMap(maps.first);
+    }
+    return UserProfile(name: 'User', appLockEnabled: false);
+  }
+
+  // Update user profile (Name, PIN, App Lock)
+  Future<int> updateUserProfile(UserProfile profile) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('User', limit: 1);
+    if (maps.isEmpty) {
+      // If table is empty, insert the user
+      return await db.insert('User', profile.toMap());
+    } else {
+      // If user exists, update it
+      return await db.update(
+        'User',
+        profile.toMap(),
+        where: 'user_id = ?',
+        whereArgs: [maps.first['user_id']],
+      );
+    }
   }
 }
