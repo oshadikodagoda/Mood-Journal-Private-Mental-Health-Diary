@@ -5,7 +5,7 @@ import '../providers/journal_provider.dart';
 import 'mood_selection_screen.dart'; 
 import 'daily_reflection_screen.dart'; 
 import 'entry_detail_screen.dart';
-import 'journal_history_screen.dart'; // Added import
+import 'journal_history_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -44,16 +44,25 @@ class _HomeScreenState extends State<HomeScreen> {
     final greeting = now.hour < 12 ? "Good morning," : (now.hour < 17 ? "Good afternoon," : "Good evening,");
     final dateStr = DateFormat('EEEE, d MMMM yyyy').format(now);
 
+    // Dynamic Theme Variables
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.primary;
+    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFFAF6EF);
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtextColor = isDark ? Colors.white60 : Colors.black54;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EF), 
+      backgroundColor: scaffoldBg,
       body: SafeArea(
         child: _selectedIndex == 0 
-          ? _buildHomeDashboard(context, greeting, dateStr, now) 
+          ? _buildHomeDashboard(context, greeting, dateStr, now, isDark, cardBg, textColor, subtextColor, accentColor) 
           : const Center(child: Text("Insights / More screens coming soon")), 
       ),
       
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF6E8F68),
+        backgroundColor: accentColor,
         elevation: 4,
         onPressed: () {
           Navigator.push(
@@ -65,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
+        color: cardBg,
         shape: const CircularNotchedRectangle(),
         notchMargin: 8.0,
         child: SizedBox(
@@ -73,11 +82,11 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(icon: Icons.home_outlined, label: 'Home', index: 0),
-              _buildNavItem(icon: Icons.menu_book_outlined, label: 'Journal', index: 1),
+              _buildNavItem(icon: Icons.home_outlined, label: 'Home', index: 0, accentColor: accentColor, isDark: isDark),
+              _buildNavItem(icon: Icons.menu_book_outlined, label: 'Journal', index: 1, accentColor: accentColor, isDark: isDark),
               const SizedBox(width: 40), // Spacing for FAB
-              _buildNavItem(icon: Icons.bar_chart, label: 'Insights', index: 2),
-              _buildNavItem(icon: Icons.menu, label: 'More', index: 3),
+              _buildNavItem(icon: Icons.bar_chart, label: 'Insights', index: 2, accentColor: accentColor, isDark: isDark),
+              _buildNavItem(icon: Icons.menu, label: 'More', index: 3, accentColor: accentColor, isDark: isDark),
             ],
           ),
         ),
@@ -85,20 +94,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildNavItem({required IconData icon, required String label, required int index}) {
+  Widget _buildNavItem({required IconData icon, required String label, required int index, required Color accentColor, required bool isDark}) {
     final isSelected = _selectedIndex == index;
-    final color = isSelected ? const Color(0xFF6E8F68) : Colors.black45;
+    final color = isSelected ? accentColor : (isDark ? Colors.white38 : Colors.black45);
     
     return InkWell(
       onTap: () {
         if (index == 1) {
-          // Open Journal History when Journal tab is clicked
           Navigator.push(
             context, 
             MaterialPageRoute(builder: (_) => const JournalHistoryScreen())
           );
         } else if (index == 3) {
-          // Open Settings when More tab is clicked
           Navigator.push(
             context, 
             MaterialPageRoute(builder: (_) => const SettingsScreen())
@@ -124,7 +131,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHomeDashboard(BuildContext context, String greeting, String dateStr, DateTime now) {
+  Widget _buildHomeDashboard(
+    BuildContext context, 
+    String greeting, 
+    String dateStr, 
+    DateTime now,
+    bool isDark,
+    Color cardBg,
+    Color textColor,
+    Color subtextColor,
+    Color accentColor,
+  ) {
     return Consumer<JournalProvider>(
       builder: (context, provider, child) {
         String? todayMood;
@@ -149,14 +166,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(greeting, style: const TextStyle(fontSize: 16, color: Colors.black54)),
+                      Text(greeting, style: TextStyle(fontSize: 16, color: subtextColor)),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         "Oshadi 🌿",
-                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
+                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textColor),
                       ),
                       const SizedBox(height: 4),
-                      Text(dateStr, style: const TextStyle(fontSize: 14, color: Colors.black45)),
+                      Text(dateStr, style: TextStyle(fontSize: 14, color: subtextColor.withOpacity(0.7))),
                     ],
                   ),
                   InkWell(
@@ -169,8 +186,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: CircleAvatar(
                       radius: 24,
-                      backgroundColor: Colors.purple[50],
-                      child: const Icon(Icons.person_outline, color: Colors.purple),
+                      backgroundColor: accentColor.withOpacity(0.15),
+                      child: Icon(Icons.person_outline, color: accentColor),
                     ),
                   ),
                 ],
@@ -181,10 +198,10 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+                    BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.03), blurRadius: 10, offset: const Offset(0, 4)),
                   ],
                 ),
                 child: Row(
@@ -195,13 +212,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("How are you feeling today?", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                          Text("How are you feeling today?", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: textColor)),
                           const SizedBox(height: 4),
                           Text(
                             todayMood != null 
                               ? "You logged: $todayMood • $todayMoodTime" 
                               : "You haven't logged your mood yet.",
-                            style: const TextStyle(fontSize: 12, color: Colors.black54),
+                            style: TextStyle(fontSize: 12, color: subtextColor),
                           ),
                           const SizedBox(height: 12),
                           InkWell(
@@ -211,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFA8C3A0),
+                                color: accentColor,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -231,9 +248,9 @@ class _HomeScreenState extends State<HomeScreen> {
               // Stats Row
               Row(
                 children: [
-                  Expanded(child: _buildStatCard(icon: Icons.local_fire_department, iconColor: Colors.redAccent, title: "5 days", subtitle: "Current streak")),
+                  Expanded(child: _buildStatCard(cardBg: cardBg, textColor: textColor, subtextColor: subtextColor, isDark: isDark, icon: Icons.local_fire_department, iconColor: Colors.redAccent, title: "5 days", subtitle: "Current streak")),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildStatCard(icon: Icons.menu_book, iconColor: Colors.green, title: "${provider.entries.length} entries", subtitle: "This month")),
+                  Expanded(child: _buildStatCard(cardBg: cardBg, textColor: textColor, subtextColor: subtextColor, isDark: isDark, icon: Icons.menu_book, iconColor: accentColor, title: "${provider.entries.length} entries", subtitle: "This month")),
                 ],
               ),
               const SizedBox(height: 16),
@@ -242,24 +259,24 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFA8C3A0).withOpacity(0.3), width: 2),
+                  border: Border.all(color: accentColor.withOpacity(0.3), width: 2),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.auto_awesome, size: 18, color: Color(0xFFA8C3A0)),
-                        SizedBox(width: 8),
-                        Text("Daily Reflection", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Icon(Icons.auto_awesome, size: 18, color: accentColor),
+                        const SizedBox(width: 8),
+                        Text("Daily Reflection", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       '"What is one thing that made you smile today?"',
-                      style: TextStyle(fontSize: 14, color: Colors.black87, fontStyle: FontStyle.italic),
+                      style: TextStyle(fontSize: 14, color: textColor, fontStyle: FontStyle.italic),
                     ),
                     const SizedBox(height: 12),
                     InkWell(
@@ -269,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFA8C3A0),
+                          color: accentColor,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text("Write about it", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
@@ -284,16 +301,15 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Recent Journal", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("Recent Journal", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
                   GestureDetector(
                     onTap: () {
-                      // UPDATED: Navigate to JournalHistoryScreen
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const JournalHistoryScreen()),
                       );
                     },
-                    child: Text("View all", style: TextStyle(fontSize: 14, color: Colors.green[700])),
+                    child: Text("View all", style: TextStyle(fontSize: 14, color: accentColor)),
                   ),
                 ],
               ),
@@ -301,11 +317,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Recent List
               if (provider.isLoading)
-                const Center(child: CircularProgressIndicator())
+                Center(child: CircularProgressIndicator(color: accentColor))
               else if (provider.entries.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: Center(child: Text("No entries yet. Start writing!")),
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Center(child: Text("No entries yet. Start writing!", style: TextStyle(color: subtextColor))),
                 )
               else
                 ListView.builder(
@@ -316,13 +332,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     final entry = provider.entries[index];
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                      decoration: BoxDecoration(
+                        color: cardBg, 
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.02), blurRadius: 6, offset: const Offset(0, 2)),
+                        ],
+                      ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         leading: Text(_getMoodEmoji(entry.mood), style: const TextStyle(fontSize: 32)),
-                        title: Text(entry.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                        subtitle: Text(entry.content, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Colors.black54)),
-                        trailing: const Icon(Icons.chevron_right, color: Colors.black26),
+                        title: Text(entry.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
+                        subtitle: Text(entry.content, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: subtextColor)),
+                        trailing: Icon(Icons.chevron_right, color: isDark ? Colors.white38 : Colors.black26),
                         onTap: () {
                           Navigator.push(context, MaterialPageRoute(builder: (_) => EntryDetailScreen(entry: entry))).then((_) => provider.loadEntries());
                         },
@@ -337,13 +359,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStatCard({required IconData icon, required Color iconColor, required String title, required String subtitle}) {
+  Widget _buildStatCard({
+    required Color cardBg,
+    required Color textColor,
+    required Color subtextColor,
+    required bool isDark,
+    required IconData icon, 
+    required Color iconColor, 
+    required String title, 
+    required String subtitle
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.02), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Row(
         children: [
@@ -353,8 +384,8 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.black54)),
+                Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
+                Text(subtitle, style: TextStyle(fontSize: 11, color: subtextColor)),
               ],
             ),
           )
