@@ -4,6 +4,7 @@ import 'services/database_service.dart';
 import 'providers/journal_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/pin_lock_screen.dart';
+import 'screens/welcome_screen.dart';
 
 void main() {
   // Ensure Flutter is initialized before opening the database
@@ -69,7 +70,7 @@ class MoodJournalApp extends StatelessWidget {
         ),
       ),
       // Set the Home Screen as the starting point
-      home: const PinLockScreen(),
+      home: const WelcomeScreen(),
     );
   }
 }
