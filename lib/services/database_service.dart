@@ -185,4 +185,29 @@ class DatabaseService {
 
     return List.generate(maps.length, (i) => JournalEntry.fromMap(maps[i]));
   }
+
+    // ==========================================
+  // USER PROFILE OPERATIONS (Member 2)
+  // ==========================================
+
+  // Get current user profile
+  Future<UserProfile> getUserProfile() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('User', limit: 1);
+    if (maps.isNotEmpty) {
+      return UserProfile.fromMap(maps.first);
+    }
+    return UserProfile(name: 'User', appLockEnabled: false);
+  }
+
+  // Update user profile (Name, PIN, App Lock)
+  Future<int> updateUserProfile(UserProfile profile) async {
+    final db = await database;
+    return await db.update(
+      'User',
+      profile.toMap(),
+      where: 'user_id = ?',
+      whereArgs: [profile.userId ?? 1],
+    );
+  }
 }
