@@ -216,4 +216,136 @@ class DatabaseService {
       );
     }
   }
+
+  Future<List<JournalEntry>> getEntriesByDate(DateTime date) async {
+    final db = await database;
+    String datePrefix = date.toIso8601String().substring(0, 10); // 'YYYY-MM-DD'
+    
+    final List<Map<String, dynamic>> maps = await db.query(
+      'JournalEntry',
+      where: 'date LIKE ?',
+      whereArgs: ['$datePrefix%'],
+      orderBy: 'created_at DESC',
+    );
+    List<JournalEntry> entries = [];
+    for (var map in maps) {
+      JournalEntry entry = JournalEntry.fromMap(map);
+      final emotionMaps = await db.query(
+        'EntryEmotion',
+        columns: ['emotion_id'],
+        where: 'entry_id = ?',
+        whereArgs: [entry.id],
+      );
+      entry.emotionIds = emotionMaps.map((e) => e['emotion_id'] as int).toList();
+      entries.add(entry);
+    }
+    return entries;
+  }
+  // 2. Multi-Criteria Filter (Keyword, Mood, Emotion, Dates)
+  Future<List<JournalEntry>> filterEntries({
+    String? keyword,
+    String? mood,
+    int? emotionId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final db = await database;
+    List<String> whereClauses = [];
+    List<dynamic> whereArgs = [];
+    if (keyword != null && keyword.trim().isNotEmpty) {
+      whereClauses.add('(title LIKE ? OR content LIKE ?)');
+      whereArgs.add('%$keyword%');
+      whereArgs.add('%$keyword%');
+    }
+    if (mood != null && mood.isNotEmpty && mood != 'All') {
+      whereClauses.add('mood = ?');
+      whereArgs.add(mood);
+    }
+    if (startDate != null && endDate != null) {
+      whereClauses.add('date BETWEEN ? AND ?');
+      whereArgs.add(startDate.toIso8601String());
+      whereArgs.add(endDate.toIso8601String());
+    }
+    String whereString = whereClauses.isNotEmpty ? whereClauses.join(' AND ') : '';
+    List<Map<String, dynamic>> maps;
+    if (emotionId != null) {
+      String sql = '''
+        SELECT j.* FROM JournalEntry j
+        INNER JOIN EntryEmotion ee ON j.entry_id = ee.entry_id
+        WHERE ee.emotion_id = ?
+        ${whereClauses.isNotEmpty ? 'AND ' + whereString : ''}
+        ORDER BY j.date DESC
+      ''';
+      maps = await db.rawQuery(sql, [emotionId, ...whereArgs]);
+    } else {
+      maps = await db.query(
+        'JournalEntry',
+        where: whereClauses.isNotEmpty ? whereString : null,
+        whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
+        orderBy: 'date DESC',
+      );
+    }
+    List<JournalEntry> entries = [];
+    for (var map in maps) {
+      JournalEntry entry = JournalEntry.fromMap(map);
+      final emotionMaps = await db.query(
+        'EntryEmotion',
+        columns: ['emotion_id'],
+        where: 'entry_id = ?',
+        whereArgs: [entry.id],
+      );
+      entry.emotionIds = emotionMaps.map((e) => e['emotion_id'] as int).toList();
+      entries.add(entry);
+    }
+    return entries;
+  }
+  // 3. Mood Analytics for Insights (Distribution, Percentages, Trends)
+  Future<Map<String, dynamic>> getMoodInsightsData() async {
+    final allEntries = await getAllEntries();
+    if (allEntries.isEmpty) {
+      return {
+        'totalEntries': 0,
+        'moodCounts': <String, int>{
+          'Very Happy': 0,
+          'Happy': 0,
+          'Neutral': 0,
+          'Sad': 0,
+          'Very Sad': 0,
+        },
+        'topMood': 'None',
+        'positivePercentage': 0.0,
+      };
+    }
+    Map<String, int> moodCounts = {
+      'Very Happy': 0,
+      'Happy': 0,
+      'Neutral': 0,
+      'Sad': 0,
+      'Very Sad': 0,
+    };
+    int positiveCount = 0;
+    for (var entry in allEntries) {
+      if (moodCounts.containsKey(entry.mood)) {
+        moodCounts[entry.mood] = moodCounts[entry.mood]! + 1;
+      }
+      if (entry.mood == 'Very Happy' || entry.mood == 'Happy') {
+        positiveCount++;
+      }
+    }
+    String topMood = 'Neutral';
+    int maxCount = -1;
+    moodCounts.forEach((mood, count) {
+      if (count > maxCount) {
+        maxCount = count;
+        topMood = mood;
+      }
+    });
+    double positivePercentage = (positiveCount / allEntries.length) * 100;
+    return {
+      'totalEntries': allEntries.length,
+      'moodCounts': moodCounts,
+      'topMood': topMood,
+      'positivePercentage': positivePercentage.roundToDouble(),
+    };
+  }
 }
