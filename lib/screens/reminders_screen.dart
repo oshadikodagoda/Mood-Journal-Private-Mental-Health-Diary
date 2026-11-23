@@ -12,17 +12,17 @@ class _RemindersScreenState extends State<RemindersScreen> {
   bool _weeklySummaryEnabled = false;
   TimeOfDay _selectedTime = const TimeOfDay(hour: 21, minute: 0); // 9:00 PM
   final List<String> _days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  final Set<int> _selectedDays = {0, 1, 2, 3, 4}; // Monday to Friday active
+  final Set<int> _selectedDays = {0, 1, 2, 3, 4};
 
-  Future<void> _pickTime() async {
+  Future<void> _pickTime(Color accentColor) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF6E8F68),
+            colorScheme: ColorScheme.light(
+              primary: accentColor,
               onPrimary: Colors.white,
               onSurface: Colors.black87,
             ),
@@ -33,9 +33,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
     );
 
     if (picked != null && mounted) {
-      setState(() {
-        _selectedTime = picked;
-      });
+      setState(() => _selectedTime = picked);
     }
   }
 
@@ -52,19 +50,27 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.primary;
+    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFFAF6EF);
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtextColor = isDark ? Colors.white60 : Colors.black54;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EF), // Soft cream
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF6EF),
+        backgroundColor: scaffoldBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Reminders",
           style: TextStyle(
-            color: Colors.black87,
+            color: textColor,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -75,15 +81,15 @@ class _RemindersScreenState extends State<RemindersScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. Daily Journaling Card ---
+            // Daily Journaling Card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -94,32 +100,32 @@ class _RemindersScreenState extends State<RemindersScreen> {
                   Container(
                     width: 44,
                     height: 44,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE8F3E9),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.notifications_outlined, color: Color(0xFF6E8F68), size: 24),
+                    child: Icon(Icons.notifications_outlined, color: accentColor, size: 24),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           "Daily Journaling",
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textColor),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           "Get a gentle nudge each day",
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                          style: TextStyle(fontSize: 12, color: subtextColor),
                         ),
                       ],
                     ),
                   ),
                   Switch(
                     value: _dailyJournalingEnabled,
-                    activeColor: const Color(0xFF6E8F68),
+                    activeColor: accentColor,
                     onChanged: (val) => setState(() => _dailyJournalingEnabled = val),
                   ),
                 ],
@@ -128,17 +134,17 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
             const SizedBox(height: 24),
 
-            // --- 2. Reminder Time ---
-            _buildSectionHeader("Reminder time"),
+            // Reminder Time
+            _buildSectionHeader("Reminder time", subtextColor),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -146,18 +152,18 @@ class _RemindersScreenState extends State<RemindersScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.access_time, color: Colors.black87, size: 22),
+                  Icon(Icons.access_time, color: textColor, size: 22),
                   const SizedBox(width: 12),
                   Text(
                     _selectedTime.format(context),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
                   ),
                   const Spacer(),
                   TextButton(
-                    onPressed: _pickTime,
-                    child: const Text(
+                    onPressed: () => _pickTime(accentColor),
+                    child: Text(
                       "Change",
-                      style: TextStyle(color: Color(0xFF6E8F68), fontWeight: FontWeight.bold),
+                      style: TextStyle(color: accentColor, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -166,8 +172,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
             const SizedBox(height: 24),
 
-            // --- 3. Repeat On Days ---
-            _buildSectionHeader("Repeat on"),
+            // Repeat On
+            _buildSectionHeader("Repeat on", subtextColor),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -187,24 +193,17 @@ class _RemindersScreenState extends State<RemindersScreen> {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF6E8F68) : Colors.white,
+                      color: isSelected ? accentColor : cardBg,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? const Color(0xFF6E8F68) : Colors.black12,
+                        color: isSelected ? accentColor : (isDark ? Colors.white24 : Colors.black12),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     child: Center(
                       child: Text(
                         _days[index],
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black54,
+                          color: isSelected ? Colors.white : subtextColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -217,36 +216,36 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
             const SizedBox(height: 24),
 
-            // --- 4. Gentle Reminder Message ---
-            _buildSectionHeader("Gentle reminder"),
+            // Gentle Reminder Message
+            _buildSectionHeader("Gentle reminder", subtextColor),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.edit_note, color: Colors.black54, size: 20),
-                      SizedBox(width: 8),
-                      Text("Message", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+                      Icon(Icons.edit_note, color: subtextColor, size: 20),
+                      const SizedBox(width: 8),
+                      Text("Message", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textColor)),
                     ],
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     "\"Take a moment to reflect on your day.\"",
-                    style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: Colors.black54),
+                    style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: subtextColor),
                   ),
                 ],
               ),
@@ -254,15 +253,15 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
             const SizedBox(height: 20),
 
-            // --- 5. Weekly Mood Summary Switch ---
+            // Weekly Mood Summary
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -270,16 +269,16 @@ class _RemindersScreenState extends State<RemindersScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.bar_chart, color: Colors.black54, size: 22),
+                  Icon(Icons.bar_chart, color: subtextColor, size: 22),
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     "Weekly mood summary",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textColor),
                   ),
                   const Spacer(),
                   Switch(
                     value: _weeklySummaryEnabled,
-                    activeColor: const Color(0xFF6E8F68),
+                    activeColor: accentColor,
                     onChanged: (val) => setState(() => _weeklySummaryEnabled = val),
                   ),
                 ],
@@ -288,14 +287,14 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
             const SizedBox(height: 36),
 
-            // --- Save Button ---
+            // Save Button
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
                 onPressed: _onSave,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6E8F68),
+                  backgroundColor: accentColor,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(26),
@@ -314,14 +313,10 @@ class _RemindersScreenState extends State<RemindersScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, Color color) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: Colors.black54,
-      ),
+      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color),
     );
   }
 }
