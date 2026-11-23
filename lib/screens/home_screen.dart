@@ -6,6 +6,7 @@ import 'mood_selection_screen.dart';
 import 'daily_reflection_screen.dart'; 
 import 'entry_detail_screen.dart';
 import 'journal_history_screen.dart'; // Added import
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -96,6 +97,12 @@ class _HomeScreenState extends State<HomeScreen> {
             context, 
             MaterialPageRoute(builder: (_) => const JournalHistoryScreen())
           );
+        } else if (index == 3) {
+          // Open Settings when More tab is clicked
+          Navigator.push(
+            context, 
+            MaterialPageRoute(builder: (_) => const SettingsScreen())
+          );
         } else {
           setState(() {
             _selectedIndex = index;
@@ -152,10 +159,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(dateStr, style: const TextStyle(fontSize: 14, color: Colors.black45)),
                     ],
                   ),
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.purple[50],
-                    child: const Icon(Icons.person_outline, color: Colors.purple),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                      );
+                    },
+                    child: CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.purple[50],
+                      child: const Icon(Icons.person_outline, color: Colors.purple),
+                    ),
                   ),
                 ],
               ),
