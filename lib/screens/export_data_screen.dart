@@ -8,16 +8,13 @@ class ExportDataScreen extends StatefulWidget {
 }
 
 class _ExportDataScreenState extends State<ExportDataScreen> {
-  // 0: PDF, 1: CSV, 2: JSON
   int _selectedFormat = 0;
-
   bool _includeEmotions = true;
   bool _includeInsights = false;
   bool _isExporting = false;
 
   void _onExport() async {
     setState(() => _isExporting = true);
-
     await Future.delayed(const Duration(milliseconds: 1200));
 
     if (mounted) {
@@ -35,19 +32,27 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.primary;
+    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFFAF6EF);
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtextColor = isDark ? Colors.white60 : Colors.black54;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EF), // Soft cream
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF6EF),
+        backgroundColor: scaffoldBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Export Data",
           style: TextStyle(
-            color: Colors.black87,
+            color: textColor,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -62,11 +67,11 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -77,17 +82,17 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
                   Container(
                     width: 44,
                     height: 44,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE8F3E9),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.file_download_outlined, color: Color(0xFF6E8F68), size: 24),
+                    child: Icon(Icons.file_download_outlined, color: accentColor, size: 24),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       "Download a copy of your journal to keep or share with someone you trust.",
-                      style: TextStyle(fontSize: 13, color: Colors.black54, height: 1.4),
+                      style: TextStyle(fontSize: 13, color: subtextColor, height: 1.4),
                     ),
                   ),
                 ],
@@ -97,15 +102,15 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
             const SizedBox(height: 24),
 
             // Format Selection
-            _buildSectionHeader("Format"),
+            _buildSectionHeader("Format", subtextColor),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -113,11 +118,11 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
               ),
               child: Column(
                 children: [
-                  _buildFormatTile("PDF Document", "Best for reading & printing", 0),
-                  const Divider(height: 1, indent: 56, endIndent: 16),
-                  _buildFormatTile("CSV Spreadsheet", "Open in Excel or Sheets", 1),
-                  const Divider(height: 1, indent: 56, endIndent: 16),
-                  _buildFormatTile("JSON", "For backups & developers", 2),
+                  _buildFormatTile("PDF Document", "Best for reading & printing", 0, textColor, subtextColor, accentColor),
+                  Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
+                  _buildFormatTile("CSV Spreadsheet", "Open in Excel or Sheets", 1, textColor, subtextColor, accentColor),
+                  Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
+                  _buildFormatTile("JSON", "For backups & developers", 2, textColor, subtextColor, accentColor),
                 ],
               ),
             ),
@@ -125,26 +130,26 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
             const SizedBox(height: 24),
 
             // Date Range
-            _buildSectionHeader("Date range"),
+            _buildSectionHeader("Date range", subtextColor),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Text("All time • Current year", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-                  Spacer(),
-                  Icon(Icons.calendar_today_outlined, size: 20, color: Colors.black45),
+                  Text("All time • Current year", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor)),
+                  const Spacer(),
+                  Icon(Icons.calendar_today_outlined, size: 20, color: subtextColor),
                 ],
               ),
             ),
@@ -154,11 +159,11 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
             // Include Options
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -167,16 +172,16 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
               child: Column(
                 children: [
                   SwitchListTile(
-                    title: const Text("Include emotions & tags", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                    title: Text("Include emotions & tags", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor)),
                     value: _includeEmotions,
-                    activeColor: const Color(0xFF6E8F68),
+                    activeColor: accentColor,
                     onChanged: (val) => setState(() => _includeEmotions = val),
                   ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  Divider(height: 1, indent: 16, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
                   SwitchListTile(
-                    title: const Text("Include mood insights", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                    title: Text("Include mood insights", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor)),
                     value: _includeInsights,
-                    activeColor: const Color(0xFF6E8F68),
+                    activeColor: accentColor,
                     onChanged: (val) => setState(() => _includeInsights = val),
                   ),
                 ],
@@ -192,7 +197,7 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
               child: ElevatedButton(
                 onPressed: _isExporting ? null : _onExport,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6E8F68),
+                  backgroundColor: accentColor,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(26),
@@ -217,26 +222,22 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, Color color) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: Colors.black54,
-      ),
+      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color),
     );
   }
 
-  Widget _buildFormatTile(String title, String subtitle, int index) {
+  Widget _buildFormatTile(String title, String subtitle, int index, Color textColor, Color subtextColor, Color accentColor) {
     final isSelected = _selectedFormat == index;
     return ListTile(
       leading: Icon(
         isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-        color: isSelected ? const Color(0xFF6E8F68) : Colors.black38,
+        color: isSelected ? accentColor : (Colors.grey),
       ),
-      title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.black45)),
+      title: Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor)),
+      subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: subtextColor)),
       onTap: () => setState(() => _selectedFormat = index),
     );
   }
