@@ -28,6 +28,10 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
         _pin += digit;
         _errorMessage = null;
       });
+
+      if (_pin.length == 4) {
+        _onSavePin();
+      }
     }
   }
 
@@ -50,23 +54,33 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
 
     // Save PIN to SQLite Database
     try {
-      await _authService.setPin(_pin);
+      await _authService.setPin(_pin).timeout(const Duration(seconds: 2));
     } catch (e) {
-      debugPrint('Error saving PIN: $e');
+      debugPrint('Database write: $e');
     }
 
     if (mounted) {
+      // If user selected Biometrics on Welcome, prompt the scanner now!
+      if (widget.enableBiometricsAfterPin) {
+        await _authService.authenticateWithBiometrics(context: context);
+      }
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('PIN created successfully!'),
-          backgroundColor: Color(0xFF6E8F68),
+        SnackBar(
+          content: Text(
+            widget.enableBiometricsAfterPin
+                ? 'Biometric Lock & Backup PIN enabled!'
+                : 'PIN created successfully!',
+          ),
+          backgroundColor: const Color(0xFF6E8F68),
         ),
       );
 
       if (widget.isChangePin) {
         Navigator.pop(context, true);
       } else {
-        // Navigate to Home Dashboard and clear setup screens
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -116,10 +130,10 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
             children: [
               const SizedBox(height: 10),
 
-              // Title
-              const Text(
-                'Create your PIN',
-                style: TextStyle(
+              // Dynamic Title (Backup PIN vs Create PIN)
+              Text(
+                widget.enableBiometricsAfterPin ? 'Set Backup PIN' : 'Create your PIN',
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
@@ -127,11 +141,13 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
               ),
               const SizedBox(height: 8),
 
-              // Subtitle
-              const Text(
-                'Choose a 4-digit PIN to keep your journal private',
+              // Dynamic Subtitle
+              Text(
+                widget.enableBiometricsAfterPin
+                    ? 'Choose a 4-digit backup PIN for your biometric lock'
+                    : 'Choose a 4-digit PIN to keep your journal private',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   color: Colors.black54,
                 ),

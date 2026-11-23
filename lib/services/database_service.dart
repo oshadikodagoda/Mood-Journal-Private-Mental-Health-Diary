@@ -2,7 +2,6 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/journal_entry.dart';
 import '../models/emotion.dart';
-import '../models/reminder.dart';
 import '../models/user_profile.dart';
 
 class DatabaseService {

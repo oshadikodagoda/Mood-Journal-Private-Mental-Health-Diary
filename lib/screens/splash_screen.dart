@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../models/user_profile.dart';
-import 'welcome_screen.dart';
 import 'onboarding_screen.dart';
 import 'pin_lock_screen.dart';
 import 'home_screen.dart';
