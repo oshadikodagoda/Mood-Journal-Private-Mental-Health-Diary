@@ -5,19 +5,27 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.primary;
+    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFFAF6EF);
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtextColor = isDark ? Colors.white60 : Colors.black54;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EF), // Soft cream
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF6EF),
+        backgroundColor: scaffoldBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "About",
           style: TextStyle(
-            color: Colors.black87,
+            color: textColor,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -33,8 +41,8 @@ class AboutScreen extends StatelessWidget {
             Container(
               width: 80,
               height: 80,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE8F3E9),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE8F3E9),
                 shape: BoxShape.circle,
               ),
               child: const Center(
@@ -44,18 +52,18 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // App Name & Version
-            const Text(
+            Text(
               "Mood Journal",
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: textColor,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               "Version 1.0.0 (Build 12)",
-              style: TextStyle(fontSize: 13, color: Colors.black45),
+              style: TextStyle(fontSize: 13, color: subtextColor),
             ),
 
             const SizedBox(height: 32),
@@ -63,11 +71,11 @@ class AboutScreen extends StatelessWidget {
             // Links Card
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -75,15 +83,15 @@ class AboutScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildTile(context, Icons.shield_outlined, "Privacy Policy", "Your data stays on your device."),
-                  const Divider(height: 1, indent: 56, endIndent: 16),
-                  _buildTile(context, Icons.description_outlined, "Terms of Use", "Standard academic use terms."),
-                  const Divider(height: 1, indent: 56, endIndent: 16),
-                  _buildTile(context, Icons.star_outline, "Rate Mood Journal", "Thank you for supporting us!"),
-                  const Divider(height: 1, indent: 56, endIndent: 16),
-                  _buildTile(context, Icons.favorite_border, "Share with a friend", "Help others build mindfulness."),
-                  const Divider(height: 1, indent: 56, endIndent: 16),
-                  _buildTile(context, Icons.mail_outline, "Contact Support", "Created for EC5208 Project."),
+                  _buildTile(context, Icons.shield_outlined, "Privacy Policy", "Your data stays on your device.", textColor, subtextColor, isDark, accentColor),
+                  Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
+                  _buildTile(context, Icons.description_outlined, "Terms of Use", "Standard academic use terms.", textColor, subtextColor, isDark, accentColor),
+                  Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
+                  _buildTile(context, Icons.star_outline, "Rate Mood Journal", "Thank you for supporting us!", textColor, subtextColor, isDark, accentColor),
+                  Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
+                  _buildTile(context, Icons.favorite_border, "Share with a friend", "Help others build mindfulness.", textColor, subtextColor, isDark, accentColor),
+                  Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
+                  _buildTile(context, Icons.mail_outline, "Contact Support", "Created for EC5208 Project.", textColor, subtextColor, isDark, accentColor),
                 ],
               ),
             ),
@@ -91,20 +99,20 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 48),
 
             // Footer
-            const Text(
+            Text(
               "\"A calmer mind builds a brighter tomorrow ✨\"",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontStyle: FontStyle.italic,
-                color: Color(0xFF6E8F68),
+                color: accentColor,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               "Made with care • 2026 Mood Journal",
-              style: TextStyle(fontSize: 12, color: Colors.black38),
+              style: TextStyle(fontSize: 12, color: subtextColor),
             ),
             const SizedBox(height: 24),
           ],
@@ -113,16 +121,25 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTile(BuildContext context, IconData icon, String title, String message) {
+  Widget _buildTile(
+    BuildContext context, 
+    IconData icon, 
+    String title, 
+    String message, 
+    Color textColor, 
+    Color subtextColor,
+    bool isDark,
+    Color accentColor,
+  ) {
     return ListTile(
-      leading: Icon(icon, color: Colors.black87, size: 22),
-      title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.black38, size: 20),
+      leading: Icon(icon, color: textColor, size: 22),
+      title: Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor)),
+      trailing: Icon(Icons.chevron_right, color: isDark ? Colors.white38 : Colors.black38, size: 20),
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
-            backgroundColor: const Color(0xFF6E8F68),
+            backgroundColor: accentColor,
             behavior: SnackBarBehavior.floating,
           ),
         );
