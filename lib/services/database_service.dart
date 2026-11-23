@@ -203,11 +203,18 @@ class DatabaseService {
   // Update user profile (Name, PIN, App Lock)
   Future<int> updateUserProfile(UserProfile profile) async {
     final db = await database;
-    return await db.update(
-      'User',
-      profile.toMap(),
-      where: 'user_id = ?',
-      whereArgs: [profile.userId ?? 1],
-    );
+    final List<Map<String, dynamic>> maps = await db.query('User', limit: 1);
+    if (maps.isEmpty) {
+      // If table is empty, insert the user
+      return await db.insert('User', profile.toMap());
+    } else {
+      // If user exists, update it
+      return await db.update(
+        'User',
+        profile.toMap(),
+        where: 'user_id = ?',
+        whereArgs: [maps.first['user_id']],
+      );
+    }
   }
 }

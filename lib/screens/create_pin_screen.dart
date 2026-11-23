@@ -5,10 +5,12 @@ import 'home_screen.dart';
 
 class CreatePinScreen extends StatefulWidget {
   final bool enableBiometricsAfterPin;
+  final bool isChangePin;
 
   const CreatePinScreen({
     super.key,
     this.enableBiometricsAfterPin = false,
+    this.isChangePin = false,
   });
 
   @override
@@ -47,9 +49,13 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
     }
 
     // Save PIN to SQLite Database
-    final success = await _authService.setPin(_pin);
+    try {
+      await _authService.setPin(_pin);
+    } catch (e) {
+      debugPrint('Error saving PIN: $e');
+    }
 
-    if (success && mounted) {
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('PIN created successfully!'),
@@ -57,12 +63,16 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
         ),
       );
 
-      // Navigate to Home Dashboard and clear setup screens
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-        (route) => false,
-      );
+      if (widget.isChangePin) {
+        Navigator.pop(context, true);
+      } else {
+        // Navigate to Home Dashboard and clear setup screens
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+      }
     }
   }
 
