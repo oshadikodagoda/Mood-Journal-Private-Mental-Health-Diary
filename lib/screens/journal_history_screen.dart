@@ -16,10 +16,15 @@ class JournalHistoryScreen extends StatefulWidget {
 class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+  String _selectedMoodFilter = "All"; // Active mood filter
   int _viewMode = 0; // 0 = List, 1 = Calendar
 
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+
+  final List<String> _moodOptions = [
+    "All", "Very Happy", "Happy", "Neutral", "Sad", "Very Sad"
+  ];
 
   @override
   void initState() {
@@ -54,6 +59,74 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
     }
   }
 
+  // --- FILTER MODAL BOTTOM SHEET (Member 3 - FR11) ---
+  void _showFilterModal() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Filter by Mood",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() => _selectedMoodFilter = "All");
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text("Reset", style: TextStyle(color: Color(0xFF6E8F68))),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 10,
+                    children: _moodOptions.map((mood) {
+                      final isSelected = _selectedMoodFilter == mood;
+                      return ChoiceChip(
+                        label: Text(
+                          mood == "All" ? "All Moods" : "${_getMoodEmoji(mood)} $mood",
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black87,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                        selected: isSelected,
+                        selectedColor: const Color(0xFF6E8F68),
+                        backgroundColor: Colors.grey.shade100,
+                        onSelected: (selected) {
+                          setState(() {
+                            _selectedMoodFilter = mood;
+                          });
+                          Navigator.pop(ctx);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,16 +147,19 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            // Filter entries based on search query
+            // Multi-criteria filter: Keyword (FR10) + Mood Tag (FR11)
             final filteredEntries = provider.entries.where((entry) {
               final query = _searchQuery.toLowerCase();
-              return entry.title.toLowerCase().contains(query) || 
-                     entry.content.toLowerCase().contains(query);
+              final matchesQuery = query.isEmpty || 
+                  entry.title.toLowerCase().contains(query) || 
+                  entry.content.toLowerCase().contains(query);
+              final matchesMood = _selectedMoodFilter == "All" || entry.mood == _selectedMoodFilter;
+              return matchesQuery && matchesMood;
             }).toList();
 
             return Column(
               children: [
-                // Search and Filter Bar
+                // Search Bar + Tune/Filter Button
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(
@@ -115,17 +191,37 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                         height: 50,
                         width: 50,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: _selectedMoodFilter != "All" ? const Color(0xFF6E8F68) : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.tune, color: Colors.black87),
-                          onPressed: () {},
+                          icon: Icon(
+                            Icons.tune, 
+                            color: _selectedMoodFilter != "All" ? Colors.white : Colors.black87,
+                          ),
+                          onPressed: _showFilterModal,
                         ),
                       )
                     ],
                   ),
                 ),
+                
+                // Active Filter Tag Indicator
+                if (_selectedMoodFilter != "All")
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
+                    child: Row(
+                      children: [
+                        Chip(
+                          label: Text("Filter: $_selectedMoodFilter", style: const TextStyle(fontSize: 12, color: Colors.white)),
+                          backgroundColor: const Color(0xFF6E8F68),
+                          deleteIcon: const Icon(Icons.close, size: 16, color: Colors.white),
+                          onDeleted: () => setState(() => _selectedMoodFilter = "All"),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 const SizedBox(height: 16),
 
                 // List / Calendar Toggle Buttons
@@ -183,7 +279,7 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Content Area: List View or Calendar View
+                // Content: List View or Calendar View
                 Expanded(
                   child: _viewMode == 0 
                     ? _buildListView(filteredEntries, provider)
@@ -197,7 +293,6 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
     );
   }
 
-  // --- CALENDAR VIEW (Member 3 - FR09) ---
   Widget _buildCalendarView(List<JournalEntry> entries, JournalProvider provider) {
     final dayEntries = entries.where((e) => isSameDay(e.date, _selectedDay)).toList();
 
@@ -264,7 +359,7 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               alignment: Alignment.center,
-              child: const Text("No journal entries for this day.", style: TextStyle(color: Colors.black45)),
+              child: const Text("No matching entries for this day.", style: TextStyle(color: Colors.black45)),
             )
           else
             ...dayEntries.map((entry) => _buildEntryTile(entry, provider)).toList(),
@@ -274,10 +369,9 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
     );
   }
 
-  // --- LIST VIEW ---
   Widget _buildListView(List<JournalEntry> entries, JournalProvider provider) {
     if (entries.isEmpty) {
-      return const Center(child: Text("No entries found."));
+      return const Center(child: Text("No entries match your search/filter."));
     }
 
     Map<String, List<JournalEntry>> groupedEntries = {};
