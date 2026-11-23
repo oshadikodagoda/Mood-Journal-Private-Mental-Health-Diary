@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../models/journal_entry.dart';
 import '../providers/journal_provider.dart';
-import 'entry_detail_screen.dart'; // Import Detail Screen
+import 'entry_detail_screen.dart';
 
 class JournalHistoryScreen extends StatefulWidget {
   const JournalHistoryScreen({super.key});
@@ -15,11 +16,15 @@ class JournalHistoryScreen extends StatefulWidget {
 class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
-  int _viewMode = 0; // 0 = List, 1 = Calendar (Placeholder)
+  int _viewMode = 0; // 0 = List, 1 = Calendar
+
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
 
   @override
   void initState() {
     super.initState();
+    _selectedDay = _focusedDay;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<JournalProvider>().loadEntries();
     });
@@ -123,13 +128,13 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // List / Calendar Toggle
+                // List / Calendar Toggle Buttons
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Container(
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Colors.black.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -178,11 +183,11 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // List View Content
+                // Content Area: List View or Calendar View
                 Expanded(
                   child: _viewMode == 0 
                     ? _buildListView(filteredEntries, provider)
-                    : const Center(child: Text("Calendar View coming soon")),
+                    : _buildCalendarView(filteredEntries, provider),
                 ),
               ],
             );
@@ -192,12 +197,89 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
     );
   }
 
+  // --- CALENDAR VIEW (Member 3 - FR09) ---
+  Widget _buildCalendarView(List<JournalEntry> entries, JournalProvider provider) {
+    final dayEntries = entries.where((e) => isSameDay(e.date, _selectedDay)).toList();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 3)),
+              ],
+            ),
+            child: TableCalendar(
+              firstDay: DateTime.utc(2020, 1, 1),
+              lastDay: DateTime.utc(2030, 12, 31),
+              focusedDay: _focusedDay,
+              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+              calendarFormat: CalendarFormat.month,
+              headerStyle: const HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+                titleTextStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              eventLoader: (day) {
+                return entries.where((e) => isSameDay(e.date, day)).toList();
+              },
+              onDaySelected: (selectedDay, focusedDay) {
+                setState(() {
+                  _selectedDay = selectedDay;
+                  _focusedDay = focusedDay;
+                });
+              },
+              calendarStyle: CalendarStyle(
+                todayDecoration: BoxDecoration(
+                  color: const Color(0xFF6E8F68).withOpacity(0.3),
+                  shape: BoxShape.circle,
+                ),
+                selectedDecoration: const BoxDecoration(
+                  color: Color(0xFF6E8F68),
+                  shape: BoxShape.circle,
+                ),
+                markerDecoration: const BoxDecoration(
+                  color: Color(0xFFE57373),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Text(
+            _selectedDay == null 
+              ? "Entries" 
+              : "Entries for ${DateFormat('MMMM d, yyyy').format(_selectedDay!)}",
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+          ),
+          const SizedBox(height: 10),
+
+          if (dayEntries.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              alignment: Alignment.center,
+              child: const Text("No journal entries for this day.", style: TextStyle(color: Colors.black45)),
+            )
+          else
+            ...dayEntries.map((entry) => _buildEntryTile(entry, provider)).toList(),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  // --- LIST VIEW ---
   Widget _buildListView(List<JournalEntry> entries, JournalProvider provider) {
     if (entries.isEmpty) {
       return const Center(child: Text("No entries found."));
     }
 
-    // Group entries by Month and Year
     Map<String, List<JournalEntry>> groupedEntries = {};
     for (var entry in entries) {
       String monthYear = DateFormat('MMMM yyyy').format(entry.date);
@@ -217,7 +299,6 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Month Header
             Padding(
               padding: const EdgeInsets.only(bottom: 12.0, top: 8.0),
               child: Text(
@@ -225,72 +306,58 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
             ),
-            
-            // Entries for this month
-            ...monthEntries.map((entry) {
-              final dateStr = DateFormat('MMM d').format(entry.date); 
-              
-              // Placeholder for actual emotion tags logic
-              String emotionTags = "Happy • Motivated • Grateful"; 
-              
-              return GestureDetector(
-                // ADDED: Navigation to Detail Screen
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EntryDetailScreen(entry: entry),
-                    ),
-                  ).then((_) => provider.loadEntries()); // Refresh list when coming back
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      // Emoji Circle
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: _getMoodBgColor(entry.mood),
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(_getMoodEmoji(entry.mood), style: const TextStyle(fontSize: 24)),
-                      ),
-                      const SizedBox(width: 16),
-                      
-                      // Entry Details
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(dateStr, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
-                            const SizedBox(height: 2),
-                            Text(entry.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87)),
-                            const SizedBox(height: 4),
-                            Text(
-                              emotionTags, 
-                              style: const TextStyle(fontSize: 12, color: Colors.black45),
-                            ),
-                          ],
-                        ),
-                      ),
-                      
-                      const Icon(Icons.chevron_right, color: Colors.black26),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
+            ...monthEntries.map((entry) => _buildEntryTile(entry, provider)).toList(),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildEntryTile(JournalEntry entry, JournalProvider provider) {
+    final dateStr = DateFormat('MMM d').format(entry.date);
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => EntryDetailScreen(entry: entry)),
+        ).then((_) => provider.loadEntries());
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: _getMoodBgColor(entry.mood),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(_getMoodEmoji(entry.mood), style: const TextStyle(fontSize: 24)),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(dateStr, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  const SizedBox(height: 2),
+                  Text(entry.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87)),
+                  const SizedBox(height: 4),
+                  Text(entry.content, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Colors.black45)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.black26),
+          ],
+        ),
+      ),
     );
   }
 }
