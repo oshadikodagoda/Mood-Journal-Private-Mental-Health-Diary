@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // <-- 1. Add this
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart'; // <-- 2. Add this
+import 'package:sqflite/sqflite.dart'; // <-- 3. Add this
 import 'package:provider/provider.dart';
 import 'services/database_service.dart';
 import 'providers/journal_provider.dart';
-import 'screens/home_screen.dart';
 import 'screens/splash_screen.dart';
-import 'screens/pin_lock_screen.dart';
-import 'screens/welcome_screen.dart';
 
 void main() {
-  // Ensure Flutter is initialized before opening the database
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize SQLite for Web (Chrome)
+  if (kIsWeb) {
+    databaseFactory = databaseFactoryFfiWeb;
+  }
   
   runApp(
     MultiProvider(
       providers: [
-        // Provide the DatabaseService to the entire app
         Provider<DatabaseService>(create: (_) => DatabaseService()),
-        // Provide the JournalProvider to manage the list of entries
         ChangeNotifierProvider(create: (_) => JournalProvider()),
       ],
       child: const MoodJournalApp(),

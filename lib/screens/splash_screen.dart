@@ -45,27 +45,31 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     Timer(const Duration(milliseconds: 2200), _checkInitialRoute);
   }
 
-  Future<void> _checkInitialRoute() async {
+    Future<void> _checkInitialRoute() async {
     try {
-      final UserProfile profile = await _db.getUserProfile();
+      // 1. Fetch user profile with a 2-second timeout so it never freezes
+      final UserProfile profile = await _db.getUserProfile().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => UserProfile(name: 'User', appLockEnabled: false),
+      );
 
       if (!mounted) return;
 
-      // 1. If App Lock is enabled, go to PIN Lock Screen
+      // 2. If App Lock is enabled, go to PIN Lock Screen
       if (profile.appLockEnabled && profile.pinCode != null && profile.pinCode!.isNotEmpty) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const PinLockScreen()),
         );
       } 
-      // 2. If user already set a name or visited before, go to Home
+      // 3. If returning user without app lock, go directly to Home
       else if (profile.name != 'User') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       } 
-      // 3. First time user, go to Onboarding slides
+      // 4. First time user, go to Onboarding slides
       else {
         Navigator.pushReplacement(
           context,
@@ -73,11 +77,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         );
       }
     } catch (e) {
-      // Fallback in case of any database delay
+      // In case of any database delay, smoothly go to Onboarding
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
         );
       }
     }
