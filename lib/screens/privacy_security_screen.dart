@@ -45,11 +45,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
         });
       }
     } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -69,14 +65,11 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
 
       await _authService.toggleAppLock(value).timeout(const Duration(seconds: 1));
     } catch (e) {
-      debugPrint('Error toggling lock: $e');
+      debugPrint('Error toggling app lock: $e');
     }
 
     if (mounted) {
-      setState(() {
-        _appLockEnabled = value;
-      });
-
+      setState(() => _appLockEnabled = value);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(value ? 'App Lock enabled' : 'App Lock disabled'),
@@ -89,41 +82,48 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.primary;
+    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFFAF6EF);
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtextColor = isDark ? Colors.white60 : Colors.black54;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EF), // Soft cream
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF6EF),
+        backgroundColor: scaffoldBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Privacy & Security",
           style: TextStyle(
-            color: Colors.black87,
+            color: textColor,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF6E8F68)))
+          ? Center(child: CircularProgressIndicator(color: accentColor))
           : SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Section 1: Protection ---
-                  _buildSectionHeader("Protection"),
+                  _buildSectionHeader("Protection", subtextColor),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardBg,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -131,47 +131,43 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                     ),
                     child: Column(
                       children: [
-                        // App Lock Toggle
                         _buildSwitchTile(
                           icon: Icons.lock_outline,
                           title: "App Lock",
                           value: _appLockEnabled,
+                          textColor: textColor,
+                          accentColor: accentColor,
                           onChanged: _handleAppLockToggle,
                         ),
-                        const Divider(height: 1, indent: 56, endIndent: 16),
-
-                        // Biometric Unlock Toggle
+                        Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
                         _buildSwitchTile(
                           icon: Icons.fingerprint,
                           title: "Biometric Unlock",
                           value: _biometricEnabled && _appLockEnabled,
+                          textColor: textColor,
+                          accentColor: accentColor,
                           onChanged: _appLockEnabled
                               ? (val) => setState(() => _biometricEnabled = val)
                               : null,
                         ),
-                        const Divider(height: 1, indent: 56, endIndent: 16),
-
-                        // Hide Journal Preview Toggle
+                        Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
                         _buildSwitchTile(
                           icon: Icons.visibility_off_outlined,
                           title: "Hide Journal Preview",
                           value: _hidePreview,
+                          textColor: textColor,
+                          accentColor: accentColor,
                           onChanged: (val) => setState(() => _hidePreview = val),
                         ),
-                        const Divider(height: 1, indent: 56, endIndent: 16),
-
-                        // Change PIN Tile
+                        Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
                         ListTile(
-                          leading: const Icon(Icons.edit_outlined, color: Colors.black87),
-                          title: const Text(
-                            "Change PIN",
-                            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
-                          ),
-                          trailing: const Icon(Icons.chevron_right, color: Colors.black38),
+                          leading: Icon(Icons.edit_outlined, color: textColor),
+                          title: Text("Change PIN", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15, color: textColor)),
+                          trailing: Icon(Icons.chevron_right, color: isDark ? Colors.white38 : Colors.black38),
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const CreatePinScreen()),
+                              MaterialPageRoute(builder: (_) => const CreatePinScreen(isChangePin: true)),
                             );
                           },
                         ),
@@ -181,16 +177,15 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
 
                   const SizedBox(height: 28),
 
-                  // --- Section 2: Your Data ---
-                  _buildSectionHeader("Your data"),
+                  _buildSectionHeader("Your data", subtextColor),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardBg,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -198,37 +193,27 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                     ),
                     child: Column(
                       children: [
-                        // Export Data
                         ListTile(
-                          leading: const Icon(Icons.file_upload_outlined, color: Colors.black87),
-                          title: const Text(
-                            "Export My Data",
-                            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
-                          ),
-                          trailing: const Icon(Icons.chevron_right, color: Colors.black38),
+                          leading: Icon(Icons.file_upload_outlined, color: textColor),
+                          title: Text("Export My Data", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15, color: textColor)),
+                          trailing: Icon(Icons.chevron_right, color: isDark ? Colors.white38 : Colors.black38),
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text("Export feature available in next release"),
+                                content: Text("Export feature available in Export Data menu"),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
                           },
                         ),
-                        const Divider(height: 1, indent: 56, endIndent: 16),
-
-                        // Delete All Journal Data
+                        Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? Colors.white12 : Colors.black12),
                         ListTile(
                           leading: const Icon(Icons.delete_outline, color: Color(0xFFE57373)),
                           title: const Text(
                             "Delete All Journal Data",
-                            style: TextStyle(
-                              color: Color(0xFFE57373),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
+                            style: TextStyle(color: Color(0xFFE57373), fontWeight: FontWeight.w500, fontSize: 15),
                           ),
-                          trailing: const Icon(Icons.chevron_right, color: Colors.black38),
+                          trailing: Icon(Icons.chevron_right, color: isDark ? Colors.white38 : Colors.black38),
                           onTap: _showDeleteDataDialog,
                         ),
                       ],
@@ -237,27 +222,27 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
 
                   const SizedBox(height: 32),
 
-                  // --- Sage Green Privacy Badge (From Figma) ---
+                  // Privacy Badge
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8F3E9), // Light sage
+                      color: isDark ? const Color(0xFF1B2E19) : const Color(0xFFE8F3E9),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFA8C3A0).withOpacity(0.5)),
+                      border: Border.all(color: accentColor.withOpacity(0.5)),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                             shape: BoxShape.circle,
                           ),
                           child: const Text('🌿', style: TextStyle(fontSize: 18)),
                         ),
                         const SizedBox(width: 14),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -265,15 +250,15 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                 "Your journal stays on your device.",
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2E5A27),
+                                  color: isDark ? Colors.white : const Color(0xFF2E5A27),
                                   fontSize: 13,
                                 ),
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
                                 "Entries are encrypted and never leave your phone unless you export them.",
                                 style: TextStyle(
-                                  color: Colors.black54,
+                                  color: isDark ? Colors.white70 : Colors.black54,
                                   fontSize: 12,
                                   height: 1.4,
                                 ),
@@ -291,14 +276,10 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, Color color) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: Colors.black54,
-      ),
+      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color),
     );
   }
 
@@ -306,16 +287,15 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     required IconData icon,
     required String title,
     required bool value,
+    required Color textColor,
+    required Color accentColor,
     required ValueChanged<bool>? onChanged,
   }) {
     return SwitchListTile(
-      secondary: Icon(icon, color: Colors.black87),
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
-      ),
+      secondary: Icon(icon, color: textColor),
+      title: Text(title, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15, color: textColor)),
       value: value,
-      activeColor: const Color(0xFF6E8F68),
+      activeColor: accentColor,
       onChanged: onChanged,
     );
   }
@@ -332,7 +312,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: Colors.black54)),
+            child: const Text("Cancel"),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
