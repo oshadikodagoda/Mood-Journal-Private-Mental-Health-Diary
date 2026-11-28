@@ -47,7 +47,8 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
     }
   }
 
-  Color _getMoodBgColor(String mood) {
+  Color _getMoodBgColor(String mood, bool isDark) {
+    if (isDark) return const Color(0xFF2C2C2C);
     switch (mood) {
       case 'Very Happy': return const Color(0xFFFFF3D6); 
       case 'Happy': return const Color(0xFFFFF3D6);
@@ -60,9 +61,10 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
   }
 
   // --- FILTER MODAL BOTTOM SHEET (Member 3 - FR11) ---
-  void _showFilterModal() {
+  void _showFilterModal(bool isDark, Color cardBg, Color textColor, Color subtextColor, Color accentColor) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -78,16 +80,16 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         "Filter by Mood",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
                       ),
                       TextButton(
                         onPressed: () {
                           setState(() => _selectedMoodFilter = "All");
                           Navigator.pop(ctx);
                         },
-                        child: const Text("Reset", style: TextStyle(color: Color(0xFF6E8F68))),
+                        child: Text("Reset", style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -101,13 +103,13 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                         label: Text(
                           mood == "All" ? "All Moods" : "${_getMoodEmoji(mood)} $mood",
                           style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black87,
+                            color: isSelected ? Colors.white : textColor,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
                         selected: isSelected,
-                        selectedColor: const Color(0xFF6E8F68),
-                        backgroundColor: Colors.grey.shade100,
+                        selectedColor: accentColor,
+                        backgroundColor: isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade100,
                         onSelected: (selected) {
                           setState(() {
                             _selectedMoodFilter = mood;
@@ -129,14 +131,23 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.primary;
+    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFFAF6EF);
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtextColor = isDark ? Colors.white60 : Colors.black54;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6EF),
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: scaffoldBg,
         elevation: 0,
-        title: const Text(
+        iconTheme: IconThemeData(color: textColor),
+        title: Text(
           "Journal",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.black87),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: textColor),
         ),
         centerTitle: false,
       ),
@@ -144,7 +155,7 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
         child: Consumer<JournalProvider>(
           builder: (context, provider, child) {
             if (provider.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(child: CircularProgressIndicator(color: accentColor));
             }
 
             // Multi-criteria filter: Keyword (FR10) + Mood Tag (FR11)
@@ -167,6 +178,7 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                       Expanded(
                         child: TextField(
                           controller: _searchController,
+                          style: TextStyle(color: textColor),
                           onChanged: (value) {
                             setState(() {
                               _searchQuery = value;
@@ -174,10 +186,10 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                           },
                           decoration: InputDecoration(
                             hintText: 'Search your journal...',
-                            hintStyle: const TextStyle(color: Colors.black38),
-                            prefixIcon: const Icon(Icons.search, color: Colors.black38),
+                            hintStyle: TextStyle(color: subtextColor),
+                            prefixIcon: Icon(Icons.search, color: subtextColor),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: cardBg,
                             contentPadding: const EdgeInsets.symmetric(vertical: 0),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -191,15 +203,15 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                         height: 50,
                         width: 50,
                         decoration: BoxDecoration(
-                          color: _selectedMoodFilter != "All" ? const Color(0xFF6E8F68) : Colors.white,
+                          color: _selectedMoodFilter != "All" ? accentColor : cardBg,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: IconButton(
                           icon: Icon(
                             Icons.tune, 
-                            color: _selectedMoodFilter != "All" ? Colors.white : Colors.black87,
+                            color: _selectedMoodFilter != "All" ? Colors.white : textColor,
                           ),
-                          onPressed: _showFilterModal,
+                          onPressed: () => _showFilterModal(isDark, cardBg, textColor, subtextColor, accentColor),
                         ),
                       )
                     ],
@@ -214,7 +226,7 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                       children: [
                         Chip(
                           label: Text("Filter: $_selectedMoodFilter", style: const TextStyle(fontSize: 12, color: Colors.white)),
-                          backgroundColor: const Color(0xFF6E8F68),
+                          backgroundColor: accentColor,
                           deleteIcon: const Icon(Icons.close, size: 16, color: Colors.white),
                           onDeleted: () => setState(() => _selectedMoodFilter = "All"),
                         ),
@@ -230,7 +242,7 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                   child: Container(
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.05),
+                      color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -240,14 +252,14 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                             onTap: () => setState(() => _viewMode = 0),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: _viewMode == 0 ? const Color(0xFF6E8F68) : Colors.transparent,
+                                color: _viewMode == 0 ? accentColor : Colors.transparent,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               alignment: Alignment.center,
                               child: Text(
                                 "List",
                                 style: TextStyle(
-                                  color: _viewMode == 0 ? Colors.white : Colors.black54,
+                                  color: _viewMode == 0 ? Colors.white : subtextColor,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -259,14 +271,14 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                             onTap: () => setState(() => _viewMode = 1),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: _viewMode == 1 ? const Color(0xFF6E8F68) : Colors.transparent,
+                                color: _viewMode == 1 ? accentColor : Colors.transparent,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               alignment: Alignment.center,
                               child: Text(
                                 "Calendar",
                                 style: TextStyle(
-                                  color: _viewMode == 1 ? Colors.white : Colors.black54,
+                                  color: _viewMode == 1 ? Colors.white : subtextColor,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -282,8 +294,8 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                 // Content: List View or Calendar View
                 Expanded(
                   child: _viewMode == 0 
-                    ? _buildListView(filteredEntries, provider)
-                    : _buildCalendarView(filteredEntries, provider),
+                    ? _buildListView(filteredEntries, provider, isDark, cardBg, textColor, subtextColor, accentColor)
+                    : _buildCalendarView(filteredEntries, provider, isDark, cardBg, textColor, subtextColor, accentColor),
                 ),
               ],
             );
@@ -293,7 +305,7 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
     );
   }
 
-  Widget _buildCalendarView(List<JournalEntry> entries, JournalProvider provider) {
+  Widget _buildCalendarView(List<JournalEntry> entries, JournalProvider provider, bool isDark, Color cardBg, Color textColor, Color subtextColor, Color accentColor) {
     final dayEntries = entries.where((e) => isSameDay(e.date, _selectedDay)).toList();
 
     return SingleChildScrollView(
@@ -303,10 +315,10 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 3)),
+                BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.03), blurRadius: 8, offset: const Offset(0, 3)),
               ],
             ),
             child: TableCalendar(
@@ -315,10 +327,16 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
               focusedDay: _focusedDay,
               selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
               calendarFormat: CalendarFormat.month,
-              headerStyle: const HeaderStyle(
+              headerStyle: HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
-                titleTextStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                titleTextStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor),
+                leftChevronIcon: Icon(Icons.chevron_left, color: textColor),
+                rightChevronIcon: Icon(Icons.chevron_right, color: textColor),
+              ),
+              daysOfWeekStyle: DaysOfWeekStyle(
+                weekdayStyle: TextStyle(color: subtextColor),
+                weekendStyle: TextStyle(color: subtextColor),
               ),
               eventLoader: (day) {
                 return entries.where((e) => isSameDay(e.date, day)).toList();
@@ -330,12 +348,15 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
                 });
               },
               calendarStyle: CalendarStyle(
+                defaultTextStyle: TextStyle(color: textColor),
+                weekendTextStyle: TextStyle(color: textColor),
+                outsideTextStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black26),
                 todayDecoration: BoxDecoration(
-                  color: const Color(0xFF6E8F68).withOpacity(0.3),
+                  color: accentColor.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
-                selectedDecoration: const BoxDecoration(
-                  color: Color(0xFF6E8F68),
+                selectedDecoration: BoxDecoration(
+                  color: accentColor,
                   shape: BoxShape.circle,
                 ),
                 markerDecoration: const BoxDecoration(
@@ -351,7 +372,7 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
             _selectedDay == null 
               ? "Entries" 
               : "Entries for ${DateFormat('MMMM d, yyyy').format(_selectedDay!)}",
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
           ),
           const SizedBox(height: 10),
 
@@ -359,19 +380,19 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               alignment: Alignment.center,
-              child: const Text("No matching entries for this day.", style: TextStyle(color: Colors.black45)),
+              child: Text("No matching entries for this day.", style: TextStyle(color: subtextColor)),
             )
           else
-            ...dayEntries.map((entry) => _buildEntryTile(entry, provider)).toList(),
+            ...dayEntries.map((entry) => _buildEntryTile(entry, provider, isDark, cardBg, textColor, subtextColor, accentColor)).toList(),
           const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  Widget _buildListView(List<JournalEntry> entries, JournalProvider provider) {
+  Widget _buildListView(List<JournalEntry> entries, JournalProvider provider, bool isDark, Color cardBg, Color textColor, Color subtextColor, Color accentColor) {
     if (entries.isEmpty) {
-      return const Center(child: Text("No entries match your search/filter."));
+      return Center(child: Text("No entries match your search/filter.", style: TextStyle(color: subtextColor)));
     }
 
     Map<String, List<JournalEntry>> groupedEntries = {};
@@ -397,17 +418,17 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
               padding: const EdgeInsets.only(bottom: 12.0, top: 8.0),
               child: Text(
                 monthYear,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
               ),
             ),
-            ...monthEntries.map((entry) => _buildEntryTile(entry, provider)).toList(),
+            ...monthEntries.map((entry) => _buildEntryTile(entry, provider, isDark, cardBg, textColor, subtextColor, accentColor)).toList(),
           ],
         );
       },
     );
   }
 
-  Widget _buildEntryTile(JournalEntry entry, JournalProvider provider) {
+  Widget _buildEntryTile(JournalEntry entry, JournalProvider provider, bool isDark, Color cardBg, Color textColor, Color subtextColor, Color accentColor) {
     final dateStr = DateFormat('MMM d').format(entry.date);
     return GestureDetector(
       onTap: () {
@@ -420,8 +441,11 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardBg,
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.03), blurRadius: 6, offset: const Offset(0, 2)),
+          ],
         ),
         child: Row(
           children: [
@@ -429,7 +453,7 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: _getMoodBgColor(entry.mood),
+                color: _getMoodBgColor(entry.mood, isDark),
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
@@ -440,15 +464,15 @@ class _JournalHistoryScreenState extends State<JournalHistoryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(dateStr, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  Text(dateStr, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: accentColor)),
                   const SizedBox(height: 2),
-                  Text(entry.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87)),
+                  Text(entry.title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textColor)),
                   const SizedBox(height: 4),
-                  Text(entry.content, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Colors.black45)),
+                  Text(entry.content, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: subtextColor)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.black26),
+            Icon(Icons.chevron_right, color: isDark ? Colors.white38 : Colors.black26),
           ],
         ),
       ),
